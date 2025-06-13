@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, Lock, Zap } from 'lucide-react';
@@ -15,21 +16,21 @@ export default function HeroSection() {
           <div className="text-center lg:text-left">
             <Link href="/" className="inline-flex items-center gap-3 mb-6 text-white hover:text-slate-200 transition-colors">
               <ShieldCheck className="h-9 w-9 sm:h-10 sm:w-10 text-accent" />
-              <span className="text-2xl sm:text-3xl font-semibold tracking-tight font-headline">Chain of Custody</span>
+              <span className="text-2xl sm:text-3xl font-semibold tracking-tight font-headline">TrustLedger</span>
             </Link>
             <h1 className="text-4xl sm:text-5xl xl:text-6xl font-bold mb-6 leading-tight font-headline">
               Secure Evidence, <br className="hidden sm:inline" />
               Assured Integrity.
             </h1>
             <p className="text-lg sm:text-xl text-slate-300 mb-10 max-w-xl mx-auto lg:mx-0 font-body">
-              The leading platform for tamper-proof evidence management. Join professionals worldwide in upholding the highest standards of forensic and legal practice.
+              The leading platform for tamper-proof evidence management. Join professionals worldwide in upholding the highest standards of forensic and legal practice with TrustLedger.
             </p>
             <Button
               size="lg"
               className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-base sm:text-lg"
               asChild
             >
-              <Link href="#dashboard">Explore Dashboard</Link>
+              <Link href="#dashboard">Get Started</Link>
             </Button>
           </div>
 
