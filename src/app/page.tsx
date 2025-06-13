@@ -1,4 +1,4 @@
-import Header from '@/components/layout/Header';
+import HeroSection from '@/components/sections/HeroSection';
 import DashboardSection from '@/components/dashboard/DashboardSection';
 import ChainOfEvidenceSection from '@/components/chain-of-evidence/ChainOfEvidenceSection';
 import TamperDetectionSection from '@/components/tamper-detection/TamperDetectionSection';
@@ -7,11 +7,13 @@ import { Separator } from '@/components/ui/separator';
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <Header />
+    <div className="flex flex-col min-h-screen">
+      <HeroSection />
       <main className="flex-grow container mx-auto px-4 py-8 sm:py-12">
         <div className="space-y-12 md:space-y-16">
-          <DashboardSection />
+          <div id="dashboard">
+            <DashboardSection />
+          </div>
           <Separator className="my-8 md:my-12" />
           <ChainOfEvidenceSection />
           <Separator className="my-8 md:my-12" />
