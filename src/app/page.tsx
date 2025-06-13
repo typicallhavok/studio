@@ -11,15 +11,15 @@ export default function HomePage() {
       <HeroSection />
       <main className="flex-grow container mx-auto px-4 py-8 sm:py-12">
         <div className="space-y-12 md:space-y-16">
-          <div id="dashboard">
+          {/* <div id="dashboard">
             <DashboardSection />
-          </div>
+          </div> */}
+          <Separator className="my-8 md:my-12" />
+          <OtherFeaturesSection />
           <Separator className="my-8 md:my-12" />
           <ChainOfEvidenceSection />
           <Separator className="my-8 md:my-12" />
           <TamperDetectionSection />
-          <Separator className="my-8 md:my-12" />
-          <OtherFeaturesSection />
         </div>
       </main>
       <footer className="py-6 mt-12 border-t border-border">
