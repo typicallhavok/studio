@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
@@ -124,8 +124,3 @@ export default function LoginForm() {
     </form>
   );
 }
-
-// Add AlertTriangle to lucide-react imports if not already there
-// For now, assuming it exists in the project or is added.
-// If not, you'd add: import { AlertTriangle } from 'lucide-react';
-// It's part of shadcn/ui/alert.tsx so it should be available.
