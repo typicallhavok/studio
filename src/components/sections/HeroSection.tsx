@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShieldCheck, Lock, Zap } from 'lucide-react'; // Added Lock and Zap for visual elements
+import { ShieldCheck, Lock, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function HeroSection() {
