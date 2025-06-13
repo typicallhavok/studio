@@ -22,7 +22,7 @@ export default function LoginPage() {
       </Card>
        <p className="mt-8 text-center text-sm text-slate-400">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="font-medium text-accent hover:text-accent/80 underline">
+        <Link href="/register" className="font-medium text-accent hover:text-accent/80 underline">
           Sign up
         </Link>
       </p>

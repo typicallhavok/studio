@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ShieldCheck, LogOut, Settings, UserCircle, LayoutDashboard, BarChart3, FileText, FolderSearch, Cpu } from 'lucide-react';
+import { ShieldCheck, LogOut, Settings, UserCircle, LayoutDashboard, BarChart3, FileText, FolderSearch, Cpu, Loader2 } from 'lucide-react';
 
 // Mock sidebar items for demonstration
 const sidebarNavItems = [

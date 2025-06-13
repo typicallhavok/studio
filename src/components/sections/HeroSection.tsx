@@ -30,7 +30,7 @@ export default function HeroSection() {
               className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-base sm:text-lg"
               asChild
             >
-              <Link href="/dashboard">Get Started</Link>
+              <Link href="/login">Get Started</Link>
             </Button>
           </div>
 
