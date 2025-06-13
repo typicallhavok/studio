@@ -6,18 +6,17 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-// Removed useAuth as we are using NextAuth
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus } from 'lucide-react';
+import { Loader2, UserPlus, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }), // Backend will enforce its own rules
   confirmPassword: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -44,39 +43,45 @@ export default function RegisterForm() {
     setIsLoading(true);
     setError(null);
 
-    // Simulate API call for registration
-    // In a real app, you would call your backend API to register the user.
-    // NextAuth's CredentialsProvider is for sign-in, not direct registration.
-    // You would typically create a user in your database via a separate API endpoint.
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const response = await fetch('/api/register', { // This URL should point to your backend
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        }),
+      });
 
-    // For this example, we'll assume registration is successful.
-    // A real implementation would involve an API call here.
-    // If the API call fails, setError with an appropriate message.
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Registration failed or server error.' }));
+        throw new Error(errorData.message || `Request failed with status ${response.status}`);
+      }
 
-    const isMockSuccess = true; // Simulate success
+      // const responseData = await response.json(); // If your backend returns data
 
-    if (isMockSuccess) {
       toast({
-        title: 'Registration Almost Complete!',
+        title: 'Registration Successful!',
         description: `Thank you for registering, ${data.name}. Please log in to continue.`,
       });
-      // Instead of logging in directly, redirect to login page.
-      // The user (test@example.com) is already "in the database" in the NextAuth mock.
-      // If you had a real API, you'd call it here.
       router.push('/login');
-    } else {
-      setError("Mock registration failed. Please try again."); // Example error
+
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(err.message || "An unexpected error occurred during registration. Please try again.");
       setIsLoading(false);
     }
-    // setIsLoading(false); // This should be set after success too if not redirecting immediately or if further actions
+    // setIsLoading(false); // setLoading(false) is handled in catch or after push
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
         <Alert variant="destructive">
-          {/* <AlertTriangle className="h-4 w-4" /> Assumed to be available from lucide-react or Alert component */}
+          <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Registration Failed</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>

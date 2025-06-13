@@ -11,12 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, LogIn, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
+import { Loader2, LogIn, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  password: z.string().min(1, { message: 'Password cannot be empty.' }), // Min 1, as backend handles length
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -43,29 +43,53 @@ export default function LoginForm() {
     setError(null);
 
     try {
+      // Step 1: Call your custom backend API
+      const backendResponse = await fetch('/api/login', { // This URL should point to your backend
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: data.email, password: data.password }),
+      });
+
+      if (!backendResponse.ok) {
+        const errorData = await backendResponse.json().catch(() => ({ message: 'Invalid credentials or server error.' }));
+        throw new Error(errorData.message || `Request failed with status ${backendResponse.status}`);
+      }
+
+      const backendUser = await backendResponse.json();
+
+      if (!backendUser || !backendUser.email || !backendUser.id) {
+          throw new Error('User data not returned from backend.');
+      }
+
+      // Step 2: If backend login is successful, sign in with NextAuth using pre-validated credentials
       const result = await signIn('credentials', {
-        redirect: false, // We'll handle redirection manually
-        email: data.email,
-        password: data.password,
-        callbackUrl: callbackUrl
+        redirect: false,
+        email: backendUser.email,
+        name: backendUser.name, // Assuming your backend returns name
+        id: backendUser.id,     // Assuming your backend returns id
+        isPreValidated: 'true', // Custom flag
+        // No password needed here as it's pre-validated by your backend
+        callbackUrl: callbackUrl,
       });
 
       if (result?.error) {
-        setError(result.error === "CredentialsSignin" ? "Invalid email or password." : result.error);
+        setError(result.error === "CredentialsSignin" ? "NextAuth sign-in failed after backend validation." : result.error);
         setIsLoading(false);
       } else if (result?.ok) {
         toast({
           title: 'Login Successful',
           description: `Welcome back! Redirecting you now...`,
         });
-        router.push(result.url || callbackUrl); // Use result.url if available
+        router.push(result.url || callbackUrl);
       } else {
-        setError("An unknown error occurred during login.");
+        setError("An unknown error occurred during NextAuth sign-in.");
         setIsLoading(false);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err);
-      setError("An unexpected error occurred. Please try again.");
+      setError(err.message || "An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
   };
