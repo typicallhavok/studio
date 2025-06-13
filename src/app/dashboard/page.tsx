@@ -1,9 +1,10 @@
 
 'use client';
 import DashboardSection from '@/components/dashboard/DashboardSection';
-import { useAuth } from '@/context/AuthContext';
+import { useSession, signOut } from 'next-auth/react'; // Changed from useAuth
 import { useRouter } from 'next/navigation';
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ShieldCheck, LogOut, Settings, UserCircle, LayoutDashboard, BarChart3, FileText, FolderSearch, Cpu, Loader2 } from 'lucide-react';
@@ -18,12 +19,15 @@ const sidebarNavItems = [
 ];
 
 function ProtectedLayout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const { data: session, status } = useSession(); // Changed from useAuth
   const router = useRouter();
+
+  const isLoading = status === 'loading';
+  const isAuthenticated = status === 'authenticated';
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push('/login?callbackUrl=/dashboard'); // Redirect to login if not authenticated
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -34,6 +38,9 @@ function ProtectedLayout({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
+  // User should be available if authenticated
+  const user = session?.user;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -51,10 +58,7 @@ function ProtectedLayout({ children }: { children: ReactNode }) {
               <Settings className="h-5 w-5" />
               <span className="sr-only">Settings</span>
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => {
-              logout();
-              router.push('/login');
-            }}>
+            <Button variant="ghost" size="icon" onClick={() => signOut({ callbackUrl: '/login' })}>
               <LogOut className="h-5 w-5" />
               <span className="sr-only">Logout</span>
             </Button>
@@ -70,7 +74,7 @@ function ProtectedLayout({ children }: { children: ReactNode }) {
                 <li key={item.title}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
+                     className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
                       ${router.pathname === item.href ? 'bg-primary text-primary-foreground' : 'hover:bg-muted hover:text-foreground'}`}
                   >
                     <item.icon className="h-5 w-5" />
@@ -85,10 +89,7 @@ function ProtectedLayout({ children }: { children: ReactNode }) {
                 <UserCircle className="h-5 w-5" />
                 Profile
              </Link>
-            <Button variant="outline" className="w-full mt-2" onClick={() => {
-                logout();
-                router.push('/login');
-              }}>
+            <Button variant="outline" className="w-full mt-2" onClick={() => signOut({ callbackUrl: '/login' })}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>

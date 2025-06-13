@@ -5,13 +5,14 @@ import { useState } from "react";
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
-import { useAuth, type User } from '@/context/AuthContext';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, LogIn } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -22,43 +23,62 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors: formErrors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setError(null);
 
-    // In a real app, you would call your backend API to authenticate
-    // and get a JWT token and user data.
-    const mockToken = 'mock-jwt-token-' + Math.random().toString(36).substring(7);
-    const mockUser: User = {
-      id: 'user-' + Math.random().toString(36).substring(7),
-      email: data.email,
-      name: data.email.split('@')[0], // Simple name generation
-    };
+    try {
+      const result = await signIn('credentials', {
+        redirect: false, // We'll handle redirection manually
+        email: data.email,
+        password: data.password,
+        callbackUrl: callbackUrl
+      });
 
-    login(mockToken, mockUser);
-    toast({
-      title: 'Login Successful',
-      description: `Welcome back, ${mockUser.name || mockUser.email}!`,
-    });
-    router.push('/dashboard');
-    setIsLoading(false);
+      if (result?.error) {
+        setError(result.error === "CredentialsSignin" ? "Invalid email or password." : result.error);
+        setIsLoading(false);
+      } else if (result?.ok) {
+        toast({
+          title: 'Login Successful',
+          description: `Welcome back! Redirecting you now...`,
+        });
+        router.push(result.url || callbackUrl); // Use result.url if available
+      } else {
+        setError("An unknown error occurred during login.");
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Login Failed</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -66,9 +86,10 @@ export default function LoginForm() {
           type="email"
           placeholder="name@example.com"
           {...register('email')}
-          className={errors.email ? 'border-destructive' : ''}
+          className={formErrors.email ? 'border-destructive' : ''}
+          autoComplete="email"
         />
-        {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+        {formErrors.email && <p className="text-sm text-destructive">{formErrors.email.message}</p>}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
@@ -77,9 +98,10 @@ export default function LoginForm() {
           type="password"
           placeholder="********"
           {...register('password')}
-          className={errors.password ? 'border-destructive' : ''}
+          className={formErrors.password ? 'border-destructive' : ''}
+          autoComplete="current-password"
         />
-        {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+        {formErrors.password && <p className="text-sm text-destructive">{formErrors.password.message}</p>}
       </div>
       <div className="flex items-center justify-between">
         <a href="#" className="text-sm text-accent hover:underline">
@@ -102,3 +124,8 @@ export default function LoginForm() {
     </form>
   );
 }
+
+// Add AlertTriangle to lucide-react imports if not already there
+// For now, assuming it exists in the project or is added.
+// If not, you'd add: import { AlertTriangle } from 'lucide-react';
+// It's part of shadcn/ui/alert.tsx so it should be available.
