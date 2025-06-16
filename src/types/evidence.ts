@@ -1,14 +1,19 @@
-import type { LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 export interface EvidenceItem {
   id: string;
   name: string;
   type: string;
-  status: 'In Storage' | 'In Transit' | 'Under Analysis' | 'Awaiting Transfer' | 'Archived';
+  status: string;
   location: string;
-  lastHandler: string;
+  lastHandler?: string;
   lastUpdate: string;
   icon: LucideIcon;
+  ipfsHash?: string;
+  size?: number;
+  caseId?: string;
+  description?: string;
+  encrypted?: boolean;
 }
 
 export interface ChainEvent {

@@ -15,7 +15,7 @@ import { Loader2, LogIn, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address.' }),
+  username: z.string().min(1, { message: 'Username cannot be empty.' }), // Min 1, as backend handles length
   password: z.string().min(1, { message: 'Password cannot be empty.' }), // Min 1, as backend handles length
 });
 
@@ -49,7 +49,7 @@ export default function LoginForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: data.email, password: data.password }),
+        body: JSON.stringify({ username: data.username, password: data.password }),
       });
 
       if (!backendResponse.ok) {
@@ -59,18 +59,16 @@ export default function LoginForm() {
 
       const backendUser = await backendResponse.json();
 
-      if (!backendUser || !backendUser.email || !backendUser.id) {
+      if (!backendUser || !backendUser.username || !backendUser.id) {
           throw new Error('User data not returned from backend.');
       }
 
       // Step 2: If backend login is successful, sign in with NextAuth using pre-validated credentials
       const result = await signIn('credentials', {
         redirect: false,
-        email: backendUser.email,
-        name: backendUser.name, // Assuming your backend returns name
-        id: backendUser.id,     // Assuming your backend returns id
-        isPreValidated: 'true', // Custom flag
-        // No password needed here as it's pre-validated by your backend
+        username: backendUser.username,
+        id: backendUser.id,
+        isPreValidated: 'true',
         callbackUrl: callbackUrl,
       });
 
@@ -104,16 +102,16 @@ export default function LoginForm() {
         </Alert>
       )}
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="username">username</Label>
         <Input
-          id="email"
-          type="email"
+          id="username"
+          type="username"
           placeholder="name@example.com"
-          {...register('email')}
-          className={formErrors.email ? 'border-destructive' : ''}
-          autoComplete="email"
+          {...register('username')}
+          className={formErrors.username ? 'border-destructive' : ''}
+          autoComplete="username"
         />
-        {formErrors.email && <p className="text-sm text-destructive">{formErrors.email.message}</p>}
+        {formErrors.username && <p className="text-sm text-destructive">{formErrors.username.message}</p>}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>

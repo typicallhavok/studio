@@ -50,7 +50,7 @@ export default function RegisterForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: data.name,
+          username: data.name,
           email: data.email,
           password: data.password,
         }),
@@ -61,7 +61,7 @@ export default function RegisterForm() {
         throw new Error(errorData.message || `Request failed with status ${response.status}`);
       }
 
-      // const responseData = await response.json(); // If your backend returns data
+      const responseData = await response.json(); // If your backend returns data
 
       toast({
         title: 'Registration Successful!',
