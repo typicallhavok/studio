@@ -18,12 +18,10 @@ const Sidebar:React.FC = () => {
 
     const sidebarNavItems = [
         { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { title: "Evidence Upload", href: "/dashboard/evidence", icon: Upload },
-        { title: "Chain of Custody", href: "/dashboard/chain", icon: Clock },
-        { title: "Verification", href: "/dashboard/verify", icon: Shield },
-        { title: "Evidence Search", href: "/dashboard/search", icon: Search },
-        { title: "Audit Logs", href: "/dashboard/audit", icon: FileCheck },
-        { title: "Settings", href: "/dashboard/settings", icon: Settings },
+        { title: "Chain of Custody", href: "/chain", icon: Clock },
+        { title: "Cases", href: "/cases", icon: Search },
+        { title: "Logs", href: "/logs", icon: FileCheck },
+        { title: "Settings", href: "/settings", icon: Settings },
     ];
 
     const pathname = usePathname();

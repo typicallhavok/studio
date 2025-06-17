@@ -22,7 +22,7 @@ const insertUser = async (username, email, insertPassword) => {
     }
 };
 
-const findUser = async ({ id=null, username = null }) => {
+const findUser = async ({ id = null, username = null }) => {
     let userRequest;
     try {
         if (username) {
@@ -37,23 +37,46 @@ const findUser = async ({ id=null, username = null }) => {
     }
 };
 
-const insertFile = async (userid, name, cid, txhash) => {
+const insertFile = async (userid, name, caseID, cid, txhash, password, description) => {
     try {
-        const file = new Files({
-            user: userid,
-            name: name,
-            cid: cid,
-            txhash: txhash,
-            createdAt: new Date(),
-        });
+        const hashedPassword = password ? await argon2.hash(password) : null;
 
-        const result = await file.save();
+        const update = {
+            $set: {
+                cid: cid,
+                caseID: caseID,
+                txhash: txhash,
+                description: description,
+                createdAt: new Date(),
+            },
+            $push: {
+                history: {
+                    timestamp: new Date(),
+                    cid: cid,
+                },
+            }
+        };
+
+        if (hashedPassword) {
+            update.$set.password = hashedPassword;
+        }
+
+        const result = await Files.findOneAndUpdate(
+            { user: userid, name: name },
+            update,
+            {
+                new: true,
+                upsert: true,
+                setDefaultsOnInsert: true
+            }
+        );
+
         // return result;
-    }
-    catch (error) {
-        console.error("Error inserting file:", error);
+    } catch (error) {
+        console.error("Error inserting/updating file:", error);
     }
 };
+
 
 const getFilesByUserId = async (userId) => {
     try {

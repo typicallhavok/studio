@@ -95,7 +95,7 @@ app.prepare()
         );
 
         server.post("/api/encryptionkey", async (req, res) => {
-            const filePassword = req.body.filePassword;
+            const filePassword = req.body.password;
             const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
             if (!token) {
                 return res.status(401).json({ error: "Unauthorized" });
@@ -107,7 +107,6 @@ app.prepare()
                     return res.status(404).json({ error: "User not found" });
                 }
                 const encryptionKey = await generateEncryptionKey(user.username, user.password, filePassword || "");
-                console.log("Generated encryption key:", encryptionKey);
                 res.status(200).json({ key: encryptionKey });
             } catch (error) {
                 console.error(error);
@@ -116,8 +115,7 @@ app.prepare()
         });
 
         server.post("/api/indexFile", async (req, res) => {
-            console.log("Indexing file:", req.body);
-            const { fileName, cid, txhash } = req.body;
+            const { fileName, cid, txhash, caseID, description, password } = req.body;
             const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
             if (!token) {
                 return res.status(401).json({ error: "Unauthorized" });
@@ -126,11 +124,9 @@ app.prepare()
                 const id = token.id;
                 const user = await findUser({id});
                 if (!user) {
-                    console.log(id)
                     return res.status(404).json({ error: "User not found" });
                 }
-                console.log(user, fileName, cid, txhash);
-                await insertFile(user._id, fileName, cid, txhash);
+                await insertFile(user._id, fileName, caseID, cid, txhash, password, description);
                 res.status(200).json({ message: "File indexed successfully", fileName });
             } catch (error) {
                 console.error(error);
@@ -150,6 +146,9 @@ app.prepare()
                     return res.status(404).json({ error: "User not found" });
                 }
                 const files = await getFilesByUserId(user._id);
+                files.forEach(file => {
+                    file.password = !!file.password; // Convert password field to boolean
+                });
                 res.status(200).json(files);
             } catch (error) {
                 console.error(error);

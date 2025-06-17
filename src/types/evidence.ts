@@ -4,16 +4,14 @@ export interface EvidenceItem {
   id: string;
   name: string;
   type: string;
-  status: string;
   location: string;
-  lastHandler?: string;
+  user?: string;
   lastUpdate: string;
   icon: LucideIcon;
-  ipfsHash?: string;
+  cid: string;
   size?: number;
-  caseId?: string;
   description?: string;
-  encrypted?: boolean;
+  password?: string;
 }
 
 export interface ChainEvent {

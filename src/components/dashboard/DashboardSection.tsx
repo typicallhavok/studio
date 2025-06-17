@@ -35,19 +35,17 @@ export default function DashboardSection() {
 
         // Transform API data into EvidenceItem format
         const formattedFiles: EvidenceItem[] = data.map((file: any) => ({
-          id: file.id || file.cid || `EV-${Math.random().toString(36).substr(2, 9)}`,
-          name: file.name || 'Unnamed Evidence',
+          id: file._id,
+          name: file.name,
           type: file.fileType || file.mimeType || 'Digital File',
-          status: file.status || 'In Storage',
           location: file.location || 'IPFS Network',
-          lastHandler: file.collector || file.lastHandler || 'System',
+          user: file.user,
           lastUpdate: file.timestamp ? new Date(file.timestamp).toLocaleString() : new Date().toLocaleString(),
           icon: getFileIcon(file.fileType || file.mimeType || ''),
-          ipfsHash: file.cid || file.ipfsHash,
+          cid: file.cid || file.ipfsHash,
           size: file.size,
-          caseId: file.caseId || 'Uncategorized',
           description: file.description || '',
-          encrypted: file.encrypted || true
+          password: file.password || true
         }));
 
         setCaseFiles(formattedFiles);
@@ -105,9 +103,8 @@ export default function DashboardSection() {
           </div>
 
           {caseFiles.length === 0 && (
-            <div className="bg-muted p-8 rounded-lg text-center">
+            <div className="bg-muted p-8 rounded-lg text-center mt-6">
               <p className="text-muted-foreground mb-2">No evidence files found.</p>
-              <p className="text-sm">Use the upload section to add your first evidence file.</p>
             </div>
           )}
         </>

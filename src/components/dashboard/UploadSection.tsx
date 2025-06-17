@@ -20,6 +20,7 @@ interface EvidenceMetadata {
     caseId: string;
     collectedBy: string;
     collectionTimestamp: number;
+    location?: { latitude: Number, longitude: Number } | string;
 }
 
 export function UploadSection() {
@@ -39,6 +40,7 @@ export function UploadSection() {
         caseId: '',
         collectedBy: '',
         collectionTimestamp: Date.now(),
+        location: 'Unknown location',
     });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,12 +53,38 @@ export function UploadSection() {
             setEncryptionKey(null);
             setTxHash(null);
             setStatus('idle');
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        setMetadata(prev => ({
+                            ...prev,
+                            location: {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                            }
+                        }));
+                    },
+                    (error) => {
+                        console.error("Error getting location:", error.message);
+                        setMetadata(prev => ({
+                            ...prev,
+                            location: ""
+                        }));
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0,
+                    }
+                );
+            } else {
+                console.error("Geolocation not supported");
+            }
 
-            // Pre-populate metadata with file details
             setMetadata(prev => ({
                 ...prev,
                 name: selectedFile.name,
-                collectionTimestamp: Date.now()
+                collectionTimestamp: Date.now(),
             }));
         }
     };
@@ -98,7 +126,7 @@ export function UploadSection() {
                 throw new Error('Failed to get encryption key from server');
             }
 
-            const {key}  = await keyResponse.json();
+            const { key } = await keyResponse.json();
             setUploadProgress(20);
             setStatus('encrypting');
 
@@ -143,7 +171,7 @@ export function UploadSection() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ fileName: file.name, cid:hash, txhash: transactionHash }),
+                body: JSON.stringify({ fileName: file.name, cid: hash, txhash: transactionHash, caseID: metadata.caseId, description: metadata.description, password: usePassword ? password : undefined }),
             })
             setUploadProgress(100);
             setStatus('complete');
@@ -214,6 +242,7 @@ export function UploadSection() {
             caseId: '',
             collectedBy: '',
             collectionTimestamp: Date.now(),
+            location: navigator.geolocation ? 'Geolocation enabled' : 'Unknown location',
         });
 
         if (fileInputRef.current) {

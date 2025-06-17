@@ -13,10 +13,17 @@ const cacheSchema = new mongoose.Schema({
 
 const filesSchema = new mongoose.Schema({
     name: { type: String, required: true },
+    description: { type: String, default: "" },
+    caseID: { type: String, required: true },
     cid: { type: String, required: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     txhash: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
+    password: { type: String },
+    history: [{
+        timestamp: { type: Date, default: Date.now },
+        cid: { type: String, required: true },
+    }]
 });
 
 const User = mongoose.model("User", userSchema);

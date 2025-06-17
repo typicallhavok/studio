@@ -83,3 +83,38 @@ export async function getFromIPFS(cid: string): Promise<Blob> {
 export function getIPFSGatewayURL(cid: string): string {
   return `http://localhost:8080/ipfs/${cid}`;
 }
+
+export async function getFirstJsonBlockFromIPFS(cid: string): Promise<any> {
+  try {
+    const response = await fetch(`${IPFS_API_URL}/cat?arg=${cid}`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get content: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const text = await blob.text(); // Convert blob to string
+
+    // Extract the first {} block
+    const start = text.indexOf('{');
+    if (start === -1) throw new Error('No opening { found');
+
+    let openBraces = 0;
+    for (let i = start; i < text.length; i++) {
+      if (text[i] === '{') openBraces++;
+      else if (text[i] === '}') openBraces--;
+
+      if (openBraces === 0) {
+        const jsonString = text.slice(start, i + 1);
+        return JSON.parse(jsonString); // return as parsed JSON object
+      }
+    }
+
+    throw new Error('No balanced {} block found');
+  } catch (error) {
+    console.error('Error extracting JSON from IPFS content:', error);
+    throw new Error('Failed to extract JSON from IPFS content');
+  }
+}
