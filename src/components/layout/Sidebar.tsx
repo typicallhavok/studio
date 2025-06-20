@@ -26,7 +26,7 @@ const Sidebar:React.FC = () => {
 
     const pathname = usePathname();
 
-    const isActive = (path: string) => pathname === path;
+    const isActive = (path: string) => pathname.includes(path);
   
     return (
         <>

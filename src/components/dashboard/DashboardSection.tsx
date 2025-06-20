@@ -92,9 +92,11 @@ export default function DashboardSection() {
 
       {!isLoading && !error && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex flex-wrap gap-6">
             {caseFiles.map(item => (
-              <EvidenceCard key={item.id} item={item} />
+              <div key={item.id} className="w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] flex-shrink-0">
+                <EvidenceCard item={item} />
+              </div>
             ))}
           </div>
 

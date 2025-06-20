@@ -1,50 +1,120 @@
 /**
- * Store evidence metadata on the blockchain
- * @param evidenceRecord The evidence record to store
- * @returns Transaction hash
+ * Evidence record structure (matches backend's EvidenceRequest)
  */
-export async function storeEvidenceOnChain(evidenceRecord: any): Promise<string> {
-  // This is a placeholder for actual blockchain integration
-  // In a real implementation, you would:
-  // 1. Connect to your blockchain provider (e.g., ethers.js or web3.js for Ethereum)
-  // 2. Create a transaction to your smart contract
-  // 3. Submit the transaction with the evidence hash and metadata
-  // 4. Return the transaction hash
-  
-  console.log('Storing evidence on blockchain:', evidenceRecord);
-  
-  // Simulate blockchain transaction delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Return a mock transaction hash
-  return `0x${Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map(b => b.toString(16).padStart(2, '0')).join('')}`;
+export interface EvidenceRecord {
+  name: string;
+  description: string;
+  caseId: string;
+  collectedBy: string;
+  collectionTimestamp: number;
+  location: { latitude: number; longitude: number }; // <-- now an object
+  cid: string;
+  fileSize: number;
+  fileType: string;
+  checksum: string;
+  passwordProtected: boolean;
 }
 
 /**
- * Verify evidence on the blockchain
- * @param ipfsHash IPFS hash of the evidence
- * @returns Evidence record from blockchain
+ * Store evidence on Hyperledger Fabric via API
+ * @param evidenceRecord - The evidence record to store
+ * @returns Object with cid and txHash from backend
  */
-export async function verifyEvidenceOnChain(ipfsHash: string): Promise<any> {
-  // This is a placeholder for actual blockchain verification
-  // In a real implementation, you would:
-  // 1. Connect to your blockchain provider
-  // 2. Query your smart contract for the evidence record
-  // 3. Verify the integrity of the evidence
-  
-  console.log('Verifying evidence on blockchain:', ipfsHash);
-  
-  // Simulate blockchain query delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Return mock data
-  return {
-    ipfsHash,
-    verified: true,
-    timestamp: Date.now() - 3600000, // 1 hour ago
-    blockNumber: 12345678,
-    transactionHash: `0x${Array.from(crypto.getRandomValues(new Uint8Array(32)))
-      .map(b => b.toString(16).padStart(2, '0')).join('')}`
-  };
+console.log("Using Chain URL:", process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000");
+export async function storeEvidenceOnChain(evidenceRecord: EvidenceRecord): Promise<{ cid: string; txHash: string }> {
+  console.log("Storing evidence on chain:", evidenceRecord);
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(evidenceRecord),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to store evidence');
+    }
+
+    return {
+      cid: data.cid,
+      txHash: data.txHash,
+    };
+  } catch (error) {
+    console.error('Error storing evidence:', error);
+    throw error;
+  }
+}
+
+/**
+ * Verify (fetch) evidence record from Hyperledger Fabric by ID (likely IPFS CID or case ID)
+ * @param id - Evidence ID to retrieve
+ * @returns The EvidenceRecord object
+ */
+export async function verifyEvidenceOnChain(id: string): Promise<EvidenceRecord> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence/${id}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to verify evidence');
+    }
+
+    return data as EvidenceRecord;
+  } catch (error) {
+    console.error('Error verifying evidence:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update status of evidence
+ * @param id - Evidence ID
+ * @param status - New status string
+ * @returns Backend confirmation
+ */
+export async function updateEvidenceStatus(id: string, status: string): Promise<string> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence/${id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update status');
+    }
+
+    return data.message;
+  } catch (error) {
+    console.error('Error updating evidence status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch evidence by ID from the backend API
+ * @param id - The evidence ID (e.g., CID)
+ * @returns The EvidenceRecord object
+ */
+export async function fetchEvidence(id: string): Promise<EvidenceRecord> {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence/${id}`
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to fetch evidence");
+    }
+
+    return data as EvidenceRecord;
+  } catch (error) {
+    console.error("Error fetching evidence:", error);
+    throw error;
+  }
 }

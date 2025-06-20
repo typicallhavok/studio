@@ -67,7 +67,6 @@ export async function getFromIPFS(cid: string): Promise<Blob> {
     if (!response.ok) {
       throw new Error(`Failed to get content: ${response.statusText}`);
     }
-    
     return await response.blob();
   } catch (error) {
     console.error('Error getting content from IPFS:', error);

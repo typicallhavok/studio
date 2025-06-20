@@ -1,14 +1,16 @@
-require("dotenv").config({ path: '../.env' });
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
+
 
 const express = require("express");
 const next = require("next");
 const argon2 = require("argon2");
-const path = require("path");
+// const path = require("path");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const { getToken } = require('next-auth/jwt');
 const { generateEncryptionKey } = require("./utils");
-const { insertUser, findUser, insertFile, getFilesByUserId } = require("./mongo");
+const { insertUser, findUser, insertFile, insertCase, getFilesByUserId, getCasesByUserId, getFilesByCaseId } = require("./mongo");
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({
@@ -82,7 +84,7 @@ app.prepare()
             }
             try {
                 const id = token.id;
-                const user = await findUser({id});
+                const user = await findUser({ id });
                 if (!user) {
                     return res.status(404).json({ error: "User not found" });
                 }
@@ -91,8 +93,7 @@ app.prepare()
                 console.error(error);
                 res.status(500).json({ error: "Internal server error" });
             }
-        }
-        );
+        });
 
         server.post("/api/encryptionkey", async (req, res) => {
             const filePassword = req.body.password;
@@ -102,7 +103,7 @@ app.prepare()
             }
             try {
                 const id = token.id;
-                const user = await findUser({id});
+                const user = await findUser({ id });
                 if (!user) {
                     return res.status(404).json({ error: "User not found" });
                 }
@@ -122,7 +123,7 @@ app.prepare()
             }
             try {
                 const id = token.id;
-                const user = await findUser({id});
+                const user = await findUser({ id });
                 if (!user) {
                     return res.status(404).json({ error: "User not found" });
                 }
@@ -134,22 +135,62 @@ app.prepare()
             }
         });
 
-        server.get("/api/files", async (req, res) => {
+        server.post("/api/indexcase", async (req, res) => {
+            const { name, caseID } = req.body;
             const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
             if (!token) {
                 return res.status(401).json({ error: "Unauthorized" });
             }
             try {
                 const id = token.id;
-                const user = await findUser({id});
+                const user = await findUser({ id });
                 if (!user) {
                     return res.status(404).json({ error: "User not found" });
                 }
-                const files = await getFilesByUserId(user._id);
+                await insertCase(user._id, name, caseID);
+                res.status(200).json({ message: "Case indexed successfully", caseID });
+            } catch (error) {
+                console.error(error);
+                res.status(500).json({ error: "Internal server error" });
+            }
+        });
+
+        server.get("/api/files", async (req, res) => {
+            const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+            if (!token) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            const caseID = req.query.caseID;
+            try {
+                const id = token.id;
+                const user = await findUser({ id });
+                if (!user) {
+                    return res.status(404).json({ error: "User not found" });
+                }
+                const files = caseID?(await getFilesByCaseId(caseID)): await getFilesByUserId(user._id, caseID);
                 files.forEach(file => {
                     file.password = !!file.password; // Convert password field to boolean
                 });
                 res.status(200).json(files);
+            } catch (error) {
+                console.error(error);
+                res.status(500).json({ error: "Internal server error" });
+            }
+        });
+
+        server.get("/api/cases", async (req, res) => {
+            const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+            if (!token) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            try {
+                const id = token.id;
+                const user = await findUser({ id });
+                if (!user) {
+                    return res.status(404).json({ error: "User not found" });
+                }
+                const cases = await getCasesByUserId(user._id);
+                res.status(200).json(cases);
             } catch (error) {
                 console.error(error);
                 res.status(500).json({ error: "Internal server error" });

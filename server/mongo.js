@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const argon2 = require("argon2");
-const { User, Cache, Files } = require("./models");
+const { User, Cache, Files, Case } = require("./models");
+const { get } = require("http");
 
 const uri = "mongodb://localhost:27017/test";
 
@@ -77,6 +78,27 @@ const insertFile = async (userid, name, caseID, cid, txhash, password, descripti
     }
 };
 
+const getCasesByUserId = async (userId) => {
+    try {
+        const cases = await Case.find({ user: userId }, { files: 0 })
+            .sort({ createdAt: -1 });
+        return cases;
+    } catch (error) {
+        console.error("Error fetching cases:", error);
+        return [];
+    }
+};
+
+getFilesByCaseId = async ( caseID ) => {
+    try {
+        console.log("Fetching files for case ID:", caseID);
+        const files = await Files.find({ caseID: caseID }).sort({ createdAt: -1 });
+        return files;
+    } catch (error) {
+        console.error("Error fetching files by case ID:", error);
+        return [];
+    }
+};
 
 const getFilesByUserId = async (userId) => {
     try {
@@ -88,11 +110,29 @@ const getFilesByUserId = async (userId) => {
     }
 };
 
+const insertCase = async (userId, name, caseID) => {
+    try {
+        const newCase = new Case({
+            name: name,
+            caseID: caseID,
+            user: userId,
+        });
+
+        const result = await newCase.save();
+        return result;
+    } catch (error) {
+        console.error("Error inserting case:", error);
+    }
+};
+
 module.exports = {
     insertUser,
     findUser,
     insertFile,
+    insertCase,
     getFilesByUserId,
+    getCasesByUserId,
+    getFilesByCaseId,
     User,
     Cache,
     Files,

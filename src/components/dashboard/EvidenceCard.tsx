@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatFileSize } from "@/lib/utils";
 import Link from "next/link";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getFromIPFS, getFirstJsonBlockFromIPFS } from '@/lib/ipfs';
 import { decryptFile } from '@/lib/encryption';
 import { useToast } from '@/hooks/use-toast';
@@ -57,17 +57,25 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [encryptedBlob, setEncryptedBlob] = useState<Blob | null>(null);
-  const [filedetails, setFileDetails] = useState(false);
+  const [fileDetails, setFileDetails] = useState(false);
   const [details, setDetails] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const { toast } = useToast();
 
   const handleFileDetails = async () => {
-    setFileDetails(!filedetails);
-    if (filedetails) {
-      const blob = await getFirstJsonBlockFromIPFS(item.cid);
-      setDetails(blob);
-      console.log("File details:", blob);
+    if (!fileDetails && item.cid) {
+      setLoadingDetails(true);
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence/${item.cid}`);
+        const data = await response.json();
+        console.log("Fetched details:", data);
+        setDetails(data);
+      } catch (error) {
+        setDetails({ error: "Failed to fetch details" });
+      }
+      setLoadingDetails(false);
     }
+    setFileDetails((prev) => !prev);
   }
 
   const handleDownload = async () => {
@@ -78,7 +86,8 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
     try {
       // Get the file from IPFS
       const blob = await getFromIPFS(item.cid);
-      if (item.password=="true") {
+
+      if (item.password == "true") {
         // For encrypted files, open the password modal
         setEncryptedBlob(blob);
         setPasswordModalOpen(true);
@@ -170,7 +179,7 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
 
   return (
     <>
-      <Card className="overflow-hidden transition-all hover:shadow-md border bg-background">
+      <Card className="overflow-hidden transition-all hover:shadow-md border bg-background h-auto">
         <div className={`h-2 w-full bg-primary`}></div>
         <CardContent className="pt-6 bg-purple-800/5">
           <div className="flex justify-between items-start">
@@ -226,17 +235,52 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
               </div>
             </div>
           </div>
+
+          {/* Add the file details section here */}
+          {fileDetails && (
+            <div className="rounded text-xs text-gray-800 dark:text-gray-200 mt-4">
+              {loadingDetails ? (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <span>Loading details...</span>
+                </div>
+              ) : details ? (
+                details.error ? (
+                  <span className="text-red-500">{details.error}</span>
+                ) : (
+                  <div className="grid grid-cols-2 gap-y-2">
+                    <div><b>Name:</b> {details.name}</div>
+                    <div><b>File Size:</b> {formatFileSize(details.fileSize)}</div>
+                    <div><b>Description:</b> {details.description}</div>
+                    <div><b>File Type:</b> {details.fileType}</div>
+                    <div><b>Case ID:</b> {details.caseId}</div>
+                    <div><b>Password Protected:</b> {details.passwordProtected ? "Yes" : "No"}</div>
+                    <div><b>Collected By:</b> {details.collectedBy}</div>
+                    <div><b>Timestamp:</b> {new Date(details.collectionTimestamp).toLocaleString()}</div>
+                    <div><b>Location:</b> {details.location?.latitude.toFixed(6)}, {details.location?.longitude.toFixed(6)}</div>
+                    <div className="col-span-2"><b>CID:</b> <span className="font-mono text-[10px]">{details.cid}</span></div>
+                    <div className="col-span-2 break-all"><b>Checksum:</b> <span className="font-mono text-[10px]">{details.checksum}</span></div>
+                  </div>
+                )
+              ) : (
+                <span>No details available.</span>
+              )}
+            </div>
+          )}
         </CardContent>
+
         <CardFooter className="border-t border-gray-100 bg-purple-800/5 px-6 py-3">
           <div className="w-full flex justify-between items-center">
             <span className="text-xs text-purple-600 font-medium">{item.type}</span>
             {item.cid && (
               <div className="flex items-center gap-1">
-                <Button variant="ghost"
+                <Button
+                  variant="ghost"
                   size="sm"
                   className="h-7 px-3 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
-                  onClick={handleFileDetails}>
-                  View details
+                  onClick={handleFileDetails}
+                >
+                  {fileDetails ? "Hide details" : "View details"}
                 </Button>
               </div>
             )}

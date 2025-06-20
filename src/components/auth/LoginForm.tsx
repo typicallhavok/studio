@@ -106,7 +106,7 @@ export default function LoginForm() {
         <Input
           id="username"
           type="username"
-          placeholder="name@example.com"
+          placeholder="username"
           {...register('username')}
           className={formErrors.username ? 'border-destructive' : ''}
           autoComplete="username"
