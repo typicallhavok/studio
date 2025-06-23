@@ -10,7 +10,8 @@ import {
   Download,
   Eye,
   Lock,
-  FileText
+  FileText,
+  History
 } from 'lucide-react';
 import type { EvidenceItem } from '@/types/evidence';
 import {
@@ -30,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { PasswordModal } from "@/components/modals/PasswordModal";
 import { get } from "http";
+import { useRouter } from 'next/navigation';
 
 // Map status to badge variant
 const getStatusBadge = (
@@ -60,7 +62,11 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
   const [fileDetails, setFileDetails] = useState(false);
   const [details, setDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [versionHistory, setVersionHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleFileDetails = async () => {
     if (!fileDetails && item.cid) {
@@ -68,7 +74,6 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence/${item.cid}`);
         const data = await response.json();
-        console.log("Fetched details:", data);
         setDetails(data);
       } catch (error) {
         setDetails({ error: "Failed to fetch details" });
@@ -107,6 +112,20 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
           document.body.removeChild(a);
         }, 100);
 
+        const uploadLog = await fetch("/api/log", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json", 
+          },
+          body: JSON.stringify({ 
+            action: "download",
+            fileName: item.name,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+
+
         toast({
           title: "Download successful",
           description: "File has been downloaded",
@@ -137,7 +156,7 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ filePassword: password, fileName: item.name }),
       } as RequestInit;
 
       const keyResponse = await fetch('/api/encryptionkey', keyRequest);
@@ -177,6 +196,31 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
     }
   };
 
+  // Add a function to fetch version history
+  const fetchVersionHistory = async (hash: string, versions: any[] = []) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence/${hash}`);
+      if (!response.ok) return versions;
+      
+      const data = await response.json();
+      versions.push({
+        cid: data.cid,
+        timestamp: new Date(data.collectionTimestamp).toLocaleString(),
+        name: data.name,
+      });
+      
+      // If there's a previous version, fetch it recursively
+      if (data.previous) {
+        return fetchVersionHistory(data.previous, versions);
+      }
+      
+      return versions;
+    } catch (error) {
+      console.error("Error fetching version history:", error);
+      return versions;
+    }
+  };
+
   return (
     <>
       <Card className="overflow-hidden transition-all hover:shadow-md border bg-background h-auto">
@@ -213,7 +257,7 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
                   )}
                   {isDownloading ? "Downloading..." : "Download"}
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => {router.push(`/chain/${item.cid}`)}}>
                   <Shield className="mr-2 h-4 w-4" /> Verify integrity
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -227,6 +271,15 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
                 Password Protected
               </Badge>
             </div>)}
+
+            {item.previous && (
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                  <History className="h-3 w-3 mr-1" />
+                  Version History
+                </Badge>
+              </div>
+            )}
 
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex items-center gap-2 text-white-700">
@@ -260,10 +313,77 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
                     <div><b>Location:</b> {details.location?.latitude.toFixed(6)}, {details.location?.longitude.toFixed(6)}</div>
                     <div className="col-span-2"><b>CID:</b> <span className="font-mono text-[10px]">{details.cid}</span></div>
                     <div className="col-span-2 break-all"><b>Checksum:</b> <span className="font-mono text-[10px]">{details.checksum}</span></div>
+                    {details.previous && (
+                      <div className="col-span-2">
+                        <div className="flex items-center gap-1 mb-1">
+                          <History className="h-4 w-4 text-amber-600" />
+                          <b>Previous Version:</b>
+                        </div>
+                        <span className="font-mono text-[10px] break-all">{details.previous}</span>
+                      </div>
+                    )}
                   </div>
                 )
               ) : (
                 <span>No details available.</span>
+              )}
+            </div>
+          )}
+
+          {/* Add version history button and details */}
+          {item.previous && (
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-3 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 font-medium"
+                onClick={async () => {
+                  if (!showHistory) {
+                    setLoadingHistory(true);
+                    const history = await fetchVersionHistory(item.cid);
+                    setVersionHistory(history);
+                    setLoadingHistory(false);
+                  }
+                  setShowHistory(!showHistory);
+                }}
+                disabled={!item.previous}
+              >
+                {loadingHistory ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <History className="h-3 w-3 mr-1" />
+                )}
+                {showHistory ? "Hide History" : "View History"}
+              </Button>
+
+              {showHistory && (
+                <div className="mt-2 rounded-md bg-purple-50 p-4 text-sm text-gray-800">
+                  <div className="font-medium text-gray-900">Version History</div>
+                  <div className="mt-2 space-y-2">
+                    {versionHistory.length === 0 ? (
+                      <div className="text-center text-gray-500 text-xs py-2">
+                        No version history available.
+                      </div>
+                    ) : (
+                      versionHistory.map((version, index) => (
+                        <div key={index} className="flex justify-between text-xs">
+                          <div className="flex-1 truncate">
+                            <Link
+                              href={`${process.env.NEXT_PUBLIC_CHAIN_EXPLORER_URL}/evidence/${version.cid}`}
+                              target="_blank"
+                              className="font-medium text-blue-600 hover:text-blue-700"
+                            >
+                              {version.name}
+                            </Link>
+                          </div>
+                          <div className="whitespace-nowrap text-gray-500">
+                            {version.timestamp}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           )}

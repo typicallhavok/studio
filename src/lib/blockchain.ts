@@ -12,7 +12,8 @@ export interface EvidenceRecord {
   fileSize: number;
   fileType: string;
   checksum: string;
-  passwordProtected: boolean;
+  passwordProtected: string;
+  previous?: boolean; // Optional field for previous evidence CID
 }
 
 /**
@@ -20,9 +21,7 @@ export interface EvidenceRecord {
  * @param evidenceRecord - The evidence record to store
  * @returns Object with cid and txHash from backend
  */
-console.log("Using Chain URL:", process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000");
 export async function storeEvidenceOnChain(evidenceRecord: EvidenceRecord): Promise<{ cid: string; txHash: string }> {
-  console.log("Storing evidence on chain:", evidenceRecord);
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence`, {
       method: 'POST',

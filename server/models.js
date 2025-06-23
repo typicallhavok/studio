@@ -35,9 +35,18 @@ const caseSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
+const logsSchema = new mongoose.Schema({
+    action: { type: String, required: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    details: { type: String, default: "" },
+    timestamp: { type: Date, default: Date.now },
+    file: { type: mongoose.Schema.Types.ObjectId, ref: 'Files' },
+});
+
 const User = mongoose.model("User", userSchema);
 const Cache = mongoose.model("Cache", cacheSchema);
 const Files = mongoose.model("Files", filesSchema);
 const Case = mongoose.model("Case", caseSchema);
+const Logs = mongoose.model("Logs", logsSchema);
 
-module.exports = { User, Cache, Files, Case };
+module.exports = { User, Cache, Files, Case, Logs };

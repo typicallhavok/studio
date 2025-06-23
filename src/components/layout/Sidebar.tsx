@@ -16,15 +16,15 @@ import {
 
 const Sidebar:React.FC = () => {
 
+    const pathname = usePathname();
+
     const sidebarNavItems = [
         { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { title: "Chain of Custody", href: "/chain", icon: Clock },
         { title: "Cases", href: "/cases", icon: Search },
+        pathname.includes("/chain")&&{ title: "Chain of Custody", href: "/chain", icon: Clock },
         { title: "Logs", href: "/logs", icon: FileCheck },
         { title: "Settings", href: "/settings", icon: Settings },
-    ];
-
-    const pathname = usePathname();
+    ].filter(Boolean);;
 
     const isActive = (path: string) => pathname.includes(path);
   

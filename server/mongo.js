@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const argon2 = require("argon2");
-const { User, Cache, Files, Case } = require("./models");
+const { User, Cache, Files, Case, Logs } = require("./models");
 const { get } = require("http");
 
 const uri = "mongodb://localhost:27017/test";
@@ -72,7 +72,7 @@ const insertFile = async (userid, name, caseID, cid, txhash, password, descripti
             }
         );
 
-        // return result;
+        return result;
     } catch (error) {
         console.error("Error inserting/updating file:", error);
     }
@@ -89,7 +89,7 @@ const getCasesByUserId = async (userId) => {
     }
 };
 
-getFilesByCaseId = async ( caseID ) => {
+const getFilesByCaseId = async ( caseID ) => {
     try {
         console.log("Fetching files for case ID:", caseID);
         const files = await Files.find({ caseID: caseID }).sort({ createdAt: -1 });
@@ -99,6 +99,53 @@ getFilesByCaseId = async ( caseID ) => {
         return [];
     }
 };
+
+const getFileById = async (fileId) => {
+    try {
+        const file = await Files.find({cid:fileId});
+        return file;
+    } catch (error) {
+        console.error("Error fetching file by ID:", error);
+        return null;
+    }
+};
+
+const logAction = async (action, details, userId, file) => {
+    try {
+        const logEntry = new Logs({
+            action: action,
+            user: userId,
+            file: file,
+            details: details || "",
+        });
+
+        await logEntry.save();
+    } catch (error) {
+        console.error("Error logging action:", error.errors);
+    }
+};
+
+const getFileByFileName = async (userId, fileName) => {
+    try {
+        const file = await Files.findOne({ user: userId, name: fileName });
+        return file;
+    } catch (error) {
+        console.error("Error fetching file by name:", error);
+        return null;
+    }
+};
+
+const getLogDetails = async (userId) => {
+    try {
+        const logs = await Logs.find({ user: userId })
+            .populate('user', 'username')
+            .populate('file', 'name');
+        return logs;
+    } catch (error) {
+        console.error("Error fetching logs:", error);
+        return [];
+    }
+}
 
 const getFilesByUserId = async (userId) => {
     try {
@@ -133,7 +180,13 @@ module.exports = {
     getFilesByUserId,
     getCasesByUserId,
     getFilesByCaseId,
+    logAction,
+    getFileByFileName,
+    getLogDetails,
+    getFileById,
     User,
     Cache,
     Files,
+    Case,
+    Logs
 };

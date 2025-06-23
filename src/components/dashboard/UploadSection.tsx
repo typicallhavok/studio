@@ -166,7 +166,7 @@ export function UploadSection() {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ password }),
+				body: JSON.stringify({ filePassword:password, fileName:file.name }),
 			};
 
 			const keyResponse = await fetch(keyEndpoint, keyRequest);

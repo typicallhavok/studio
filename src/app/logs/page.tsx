@@ -27,16 +27,15 @@ import {
 } from "@/components/ui/table";
 
 interface LogEntry {
-  id: string;
-  cid: string;
+  id: string;  // Only used for React keys, not displayed
   fileName: string;
   caseId: string;
-  actionType: 'view' | 'modify' | 'download' | 'access';
+  actionType: string;
   timestamp: string;
   user: string;
+  details?: string;
   userRole?: string;
   ipAddress?: string;
-  details?: string;
 }
 
 // Reuse the protected layout from dashboard
@@ -93,14 +92,16 @@ function getActionIcon(action: string) {
 
 function getActionBadge(action: string) {
   switch (action) {
-    case 'view':
-      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">View</Badge>;
-    case 'modify':
+    case 'access':
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Access</Badge>;
+    case 'modified':
       return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Modify</Badge>;
     case 'download':
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Download</Badge>;
+    case 'created':
+      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Created</Badge>;
     default:
-      return <Badge variant="outline">Access</Badge>;
+      return <Badge variant="outline">View</Badge>;
   }
 }
 
@@ -119,27 +120,24 @@ function LogsContent() {
         setIsLoading(true);
         // Replace with your actual API endpoint
         const response = await fetch('/api/logs');
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch logs: ${response.statusText}`);
         }
-        
         const data = await response.json();
-        
+        console.log('Fetched logs:', data);
+
         // Transform API data to match LogEntry interface
         const formattedLogs: LogEntry[] = data.map((log: any) => ({
-          id: log._id || log.id,
-          cid: log.cid,
-          fileName: log.fileName || 'Unknown file',
+          id: log._id || '', // We'll keep this for React keys but won't display it
+          actionType: log.action || 'access',
+          fileName: log.file?.name || 'Unknown file',
           caseId: log.caseId || 'Unknown case',
-          actionType: log.actionType || 'access',
           timestamp: new Date(log.timestamp).toLocaleString(),
-          user: log.user || 'Unknown user',
-          userRole: log.userRole,
-          ipAddress: log.ipAddress,
-          details: log.details
+          user: log.user?.username || 'Unknown user',
+          details: log.details || ''
         }));
-        
+
         setLogs(formattedLogs);
         setFilteredLogs(formattedLogs);
       } catch (err: any) {
@@ -156,23 +154,23 @@ function LogsContent() {
   // Apply filters when any filter changes
   useEffect(() => {
     let filtered = logs;
-    
+
     // Apply search term filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(log => 
+      filtered = filtered.filter(log =>
         log.fileName.toLowerCase().includes(term) ||
         log.caseId.toLowerCase().includes(term) ||
         log.user.toLowerCase().includes(term) ||
         (log.details && log.details.toLowerCase().includes(term))
       );
     }
-    
+
     // Apply action type filter
     if (actionFilter !== 'all') {
       filtered = filtered.filter(log => log.actionType === actionFilter);
     }
-    
+
     // Apply time filter
     const now = new Date();
     if (timeFilter === 'today') {
@@ -187,7 +185,7 @@ function LogsContent() {
       monthAgo.setMonth(now.getMonth() - 1);
       filtered = filtered.filter(log => new Date(log.timestamp) >= monthAgo);
     }
-    
+
     setFilteredLogs(filtered);
   }, [searchTerm, actionFilter, timeFilter, logs]);
 
@@ -208,7 +206,7 @@ function LogsContent() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <div className="flex gap-2 w-full md:w-auto">
           <Select value={actionFilter} onValueChange={setActionFilter}>
             <SelectTrigger className="w-[130px]">
@@ -224,7 +222,7 @@ function LogsContent() {
               <SelectItem value="download">Download</SelectItem>
             </SelectContent>
           </Select>
-          
+
           <Select value={timeFilter} onValueChange={setTimeFilter}>
             <SelectTrigger className="w-[130px]">
               <div className="flex items-center gap-2">
@@ -317,7 +315,7 @@ function LogsContent() {
               </TableBody>
             </Table>
           </div>
-          
+
           <div className="text-sm text-muted-foreground">
             Showing {filteredLogs.length} of {logs.length} log entries
           </div>

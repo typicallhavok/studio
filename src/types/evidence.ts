@@ -12,6 +12,7 @@ export interface EvidenceItem {
   size?: number;
   description?: string;
   password?: string;
+  previous?: string;
 }
 
 export interface ChainEvent {
