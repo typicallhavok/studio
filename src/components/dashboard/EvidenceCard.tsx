@@ -91,45 +91,105 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
     try {
       // Get the file from IPFS
       const blob = await getFromIPFS(item.cid);
-
       if (item.password == "true") {
-        // For encrypted files, open the password modal
+        // For encrypted files that need password input, open the password modal
+        console.log("Blob retrieved from IPFS:", blob);
+
         setEncryptedBlob(blob);
         setPasswordModalOpen(true);
         setIsDownloading(false);
       } else {
-        // For unencrypted files, download directly
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = item.name || `evidence-${item.id}`;
-        document.body.appendChild(a);
-        a.click();
+        // For files without password, decrypt without requiring password input
+        try {
+          const keyRequest = {
+            method: 'POST',
+            credentials: "include",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fileName: item.name }), // No filePassword included
+          } as RequestInit;
 
-        // Clean up
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        }, 100);
+          const keyResponse = await fetch('/api/encryptionkey', keyRequest);
 
-        const uploadLog = await fetch("/api/log", {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json", 
-          },
-          body: JSON.stringify({ 
-            action: "download",
-            fileName: item.name,
-            timestamp: new Date().toISOString(),
-          }),
-        });
+          if (!keyResponse.ok) {
+            throw new Error('Failed to get encryption key from server');
+          }
 
+          const { key } = await keyResponse.json();
 
-        toast({
-          title: "Download successful",
-          description: "File has been downloaded",
-        });
+          // Try to decrypt the file using the key
+          const { blob: decryptedBlob, metadata } = await decryptFile(blob, key);
+          console.log("Decrypted Blob:", decryptedBlob, "Metadata:", metadata);
+
+          // Create a download link with the original filename
+          const url = URL.createObjectURL(decryptedBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = metadata.name || `evidence-${item.id}`;
+          document.body.appendChild(a);
+          a.click();
+
+          // Clean up
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          }, 100);
+
+          // Log the download
+          await fetch("/api/log", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "download",
+              fileName: item.name,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+
+          toast({
+            title: "Download successful",
+            description: "File has been decrypted and downloaded",
+          });
+        } catch (decryptError) {
+          console.error("Decryption error:", decryptError);
+
+          // If decryption fails, fall back to downloading the original blob
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = item.name || `evidence-${item.id}`;
+          document.body.appendChild(a);
+          a.click();
+
+          // Clean up
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          }, 100);
+
+          await fetch("/api/log", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "download",
+              fileName: item.name,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+
+          toast({
+            title: "Download successful",
+            description: "File has been downloaded",
+          });
+        }
+
         setIsDownloading(false);
       }
     } catch (error) {
@@ -201,19 +261,19 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_CHAIN_URL || "http://localhost:3000"}/evidence/${hash}`);
       if (!response.ok) return versions;
-      
+
       const data = await response.json();
       versions.push({
         cid: data.cid,
         timestamp: new Date(data.collectionTimestamp).toLocaleString(),
         name: data.name,
       });
-      
+
       // If there's a previous version, fetch it recursively
       if (data.previous) {
         return fetchVersionHistory(data.previous, versions);
       }
-      
+
       return versions;
     } catch (error) {
       console.error("Error fetching version history:", error);
@@ -257,7 +317,7 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
                   )}
                   {isDownloading ? "Downloading..." : "Download"}
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => {router.push(`/chain/${item.cid}`)}}>
+                <DropdownMenuItem onSelect={() => { router.push(`/chain/${item.cid}`) }}>
                   <Shield className="mr-2 h-4 w-4" /> Verify integrity
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -113,7 +113,7 @@ app.prepare()
                 } 
                 else {
                     const file = await getFileByFileName(user._id, fileName)
-                    await logAction("access",`Generated encryption key for user ${user.username} for the file ${fileName}`, user._id, file._id);
+                    await logAction("access",`Generated encryption key for user ${user.username} for the file ${fileName}`, user._id, file && file._id||null);
                 }
                 res.status(200).json({ key: encryptionKey });
             } catch (error) {

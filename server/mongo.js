@@ -115,7 +115,7 @@ const logAction = async (action, details, userId, file) => {
         const logEntry = new Logs({
             action: action,
             user: userId,
-            file: file,
+            file: file? file : null,
             details: details || "",
         });
 
