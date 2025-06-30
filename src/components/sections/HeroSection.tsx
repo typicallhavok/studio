@@ -1,4 +1,3 @@
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, Lock, Zap } from 'lucide-react';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 
 export default function HeroSection() {
   return (
-    <section className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-950 text-white py-16 md:py-24 lg:py-32 overflow-hidden">
+    <section className="relative bg-foreground text-white py-16 md:py-24 lg:py-32 overflow-hidden">
       <div className="absolute inset-0 opacity-5">
         {/* Subtle background pattern or elements could be added here */}
       </div>
@@ -39,7 +38,7 @@ export default function HeroSection() {
             {/* Larger Screen Image - Chain of Evidence / Branching */}
             <div className="absolute top-0 right-0 w-[75%] h-[70%] sm:w-[80%] sm:h-[75%] md:w-[85%] md:h-[80%] rounded-lg overflow-hidden shadow-2xl transform translate-x-[5%] -translate-y-[5%] lg:translate-x-[10%] lg:-translate-y-[10%] border-2 border-purple-400/30">
               <Image
-                src="https://placehold.co/1200x800.png"
+                src="/brain.png"
                 alt="Chain of Evidence Visualization"
                 layout="fill"
                 objectFit="cover"
@@ -50,7 +49,7 @@ export default function HeroSection() {
             {/* Phone Image - IPFS Encrypted Log */}
             <div className="absolute bottom-0 left-0 w-[40%] h-[80%] sm:w-[40%] sm:h-[85%] md:w-[45%] md:h-[90%] rounded-xl overflow-hidden shadow-2xl border-2 md:border-4 border-indigo-400/50 transform -translate-x-[10%] translate-y-[10%] lg:-translate-x-[15%] lg:translate-y-[15%]">
               <Image
-                src="https://placehold.co/400x800.png"
+                src="/encrypted.png"
                 alt="Encrypted Log File on Phone (IPFS)"
                 layout="fill"
                 objectFit="cover"

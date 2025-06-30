@@ -5,14 +5,17 @@ import { fetchEvidence, EvidenceRecord } from "../../../lib/blockchain";
 import { format } from "date-fns";
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download, AlertTriangle, Link, Clock, User, FileText, MapPin, Shield } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
-import Sidebar from '@/components/layout/Sidebar';
 import { useParams } from "next/navigation";
-import { PasswordModal } from "@/components/modals/PasswordModal"; // Add this import
-import { decryptFile } from '@/lib/encryption'; // Add this import
-import { useToast } from '@/hooks/use-toast'; // Add this import
+import { PasswordModal } from "@/components/modals/PasswordModal";
+import { decryptFile } from '@/lib/encryption';
+import { useToast } from '@/hooks/use-toast';
 import { getFromIPFS } from "@/lib/ipfs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 interface ChainItem extends EvidenceRecord {
@@ -28,28 +31,27 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login?callbackUrl=/chainevidence');
+      router.push('/login?callbackUrl=/chain');
     }
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-950">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-white" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-950">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container mx-auto px-4">
-        <div className="flex flex-1 mt-4 rounded-lg overflow-hidden">
-          <div className="hidden md:block">
-            <Sidebar />
-          </div>
-          <main className="flex-1 bg-card rounded-lg shadow-xl p-6 overflow-auto ml-10">
-            {children}
+      <div className="flex-1 container mx-auto px-4 border-l border-r border-white/20 shadow-2xl">
+        <div className="h-full flex justify-center mt-4">
+          <main className="w-full max-w-6xl bg-card rounded-xl shadow-xl overflow-hidden flex flex-col">
+            <div className="flex-1 p-6 overflow-y-auto">
+              {children}
+            </div>
           </main>
         </div>
       </div>
@@ -61,7 +63,6 @@ function ChainEvidenceContent({ id }: { id: string }) {
   const [chainItems, setChainItems] = useState<ChainItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Add these new state variables for password handling
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [currentDownloadItem, setCurrentDownloadItem] = useState<ChainItem | null>(null);
@@ -242,113 +243,194 @@ function ChainEvidenceContent({ id }: { id: string }) {
   };
 
 
-  // Helper function to download a file
-  const downloadFile = (blob: Blob, fileName: string) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-
-    // Clean up
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    }, 100);
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (loading) {
     return (
-      <div>
-        <h1 className="text-2xl font-bold mb-4">Chain of Evidence</h1>
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="mt-2">Loading chain of evidence...</p>
+      <section className="py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Link className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold text-card-foreground">Chain of Evidence</h1>
         </div>
-      </div>
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <Loader2 className="h-10 w-10 animate-spin mb-4" />
+          <p>Loading chain of evidence...</p>
+        </div>
+      </section>
     );
   }
 
   if (error) {
     return (
-      <div>
-        <h1 className="text-2xl font-bold mb-4">Chain of Evidence</h1>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
+      <section className="py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Link className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold text-card-foreground">Chain of Evidence</h1>
         </div>
-      </div>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </section>
     );
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Chain of Evidence</h1>
+    <section className="py-8">
+      <div className="flex items-center gap-3 mb-6">
+        <Link className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-bold text-card-foreground">Chain of Evidence</h1>
+      </div>
 
       {chainItems.length === 0 ? (
-        <div>No evidence records found.</div>
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-muted-foreground">No evidence records found.</p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="space-y-8">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Evidence ID: {id}</h2>
-            <p className="text-gray-400">{chainItems.length} version{chainItems.length !== 1 ? 's' : ''} in chain</p>
-          </div>
-
-          <div className="border-l-2 border-blue-500 pl-4 space-y-12">
-            {chainItems.map((item, index) => (
-              <div key={item.cid} className="relative">
-                <div className="absolute -left-6 mt-1.5 w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                  {chainItems.length - index}
+        <div className="space-y-6">
+          {/* Header Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Evidence Chain Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Evidence ID</p>
+                  <p className="font-mono text-sm break-all">{id}</p>
                 </div>
-
-                <div className="bg-slate-800 p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-semibold text-white">{item.name}</h3>
-                  <p className="text-sm text-gray-400 mb-2">
-                    {format(new Date(item.collectionTimestamp), "PPpp")}
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-gray-200">
-                    <div>
-                      <p><span className="font-medium text-white">Description:</span> {item.description}</p>
-                      <p><span className="font-medium text-white">Case ID:</span> {item.caseId}</p>
-                      <p><span className="font-medium text-white">Collected By:</span> {item.collectedBy}</p>
-                    </div>
-                    <div>
-                      <p><span className="font-medium text-white">File Size:</span> {(item.fileSize / 1024).toFixed(2)} KB</p>
-                      <p><span className="font-medium text-white">File Type:</span> {item.fileType}</p>
-                      <p><span className="font-medium text-white">CID:</span> {item.cid}</p>
-                      {item.location && (
-                        <p>
-                          <span className="font-medium text-white">Location:</span> {' '}
-                          {item.location.latitude}, {item.location.longitude}
-                        </p>
-                      )}
-                      {item.passwordProtected && (
-                        <p className="text-amber-400">
-                          <span className="font-medium text-amber-400">Security:</span> Password Protected
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {item.fileData && (
-                    <div className="mt-2">
-                      <button
-                        onClick={() => handleDownload(item)}
-                        className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
-                        Download File
-                      </button>
-                    </div>
-                  )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Chain Length</p>
+                  <p className="text-lg font-semibold text-primary">{chainItems.length} version{chainItems.length !== 1 ? 's' : ''}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Latest Update</p>
+                  <p className="text-sm">{format(new Date(chainItems[0]?.collectionTimestamp), "PPp")}</p>
                 </div>
               </div>
-            ))}
+            </CardContent>
+          </Card>
+
+          {/* Chain Timeline */}
+          <div className="relative">
+            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-border"></div>
+            
+            <div className="space-y-8">
+              {chainItems.map((item, index) => (
+                <div key={item.cid} className="relative">
+                  {/* Timeline marker */}
+                  <div className="absolute left-6 w-4 h-4 bg-primary rounded-full border-4 border-background"></div>
+                  
+                  {/* Version badge */}
+                  <div className="absolute left-0 top-0">
+                    <Badge variant="outline" className="bg-primary/10 text-primary">
+                      v{chainItems.length - index}
+                    </Badge>
+                  </div>
+
+                  {/* Evidence card */}
+                  <div className="ml-16">
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <FileText className="h-5 w-5" />
+                              {item.name}
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                              <Clock className="h-4 w-4" />
+                              {format(new Date(item.collectionTimestamp), "PPpp")}
+                            </p>
+                          </div>
+                          {item.passwordProtected && (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                              <Shield className="h-3 w-3 mr-1" />
+                              Protected
+                            </Badge>
+                          )}
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-medium text-card-foreground">Description</p>
+                              <p className="text-sm text-muted-foreground">{item.description}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-card-foreground">Case ID</p>
+                              <p className="text-sm text-muted-foreground">{item.caseId}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-card-foreground flex items-center gap-1">
+                                <User className="h-4 w-4" />
+                                Collected By
+                              </p>
+                              <p className="text-sm text-muted-foreground">{item.collectedBy}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-medium text-card-foreground">File Details</p>
+                              <div className="text-sm text-muted-foreground space-y-1">
+                                <p>Size: {formatFileSize(item.fileSize)}</p>
+                                <p>Type: {item.fileType}</p>
+                                <p className="font-mono break-all">CID: {item.cid}</p>
+                              </div>
+                            </div>
+                            
+                            {item.location && (
+                              <div>
+                                <p className="text-sm font-medium text-card-foreground flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
+                                  Location
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.location.latitude.toFixed(6)}, {item.location.longitude.toFixed(6)}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {item.fileData && (
+                          <div className="mt-6 pt-4 border-t border-border">
+                            <Button
+                              onClick={() => handleDownload(item)}
+                              disabled={isDownloading}
+                              className="flex items-center gap-2"
+                            >
+                              {isDownloading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
+                              Download File
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Add the PasswordModal component */}
       <PasswordModal
         isOpen={passwordModalOpen}
         onClose={() => {
@@ -359,7 +441,7 @@ function ChainEvidenceContent({ id }: { id: string }) {
         isLoading={isDownloading}
         error={passwordError}
       />
-    </div>
+    </section>
   );
 }
 

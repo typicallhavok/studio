@@ -276,6 +276,30 @@ app.prepare()
             }
         });
 
+        server.post("/api/log", async (req, res) => {
+            const { action, fileName, timestamp } = req.body;
+            const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+            if (!token) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            try {
+                const id = token.id;
+                const user = await findUser({ id });
+                if (!user) {
+                    return res.status(404).json({ error: "User not found" });
+                }
+                const file = await getFileByFileName(user._id, fileName);
+                if (!file) {
+                    return res.status(404).json({ error: "File not found" });
+                }
+                await logAction(action, `user with ${user._id} and name ${user.name} completed the action: ${action} for the file: ${fileName}`, user._id, file._id);
+                res.status(200).json({ message: "Log recorded successfully" });
+            } catch (error) {
+                console.error(error);
+                res.status(500).json({ error: "Internal server error" });
+            }
+        });
+
         server.all("*", (req, res) => {
             return handle(req, res);
         });

@@ -1,13 +1,13 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
-import Sidebar from '@/components/layout/Sidebar';
 import CasesSection from '@/components/cases/CasesSection';
+import type { ReactNode } from 'react';
 
-function ProtectedLayout({ children }) {
+function ProtectedLayout({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -22,22 +22,21 @@ function ProtectedLayout({ children }) {
 
   if (isLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-950">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-white" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-950">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container mx-auto px-4">
-        <div className="flex flex-1 mt-4 rounded-lg overflow-hidden">
-          <div className="hidden md:block">
-            <Sidebar />
-          </div>
-          <main className="flex-1 bg-card rounded-lg shadow-xl p-6 overflow-auto ml-10">
-            {children}
+      <div className="flex-1 container mx-auto px-4 border-l border-r border-white/20 shadow-2xl">
+        <div className="h-full flex justify-center mt-4">
+          <main className="w-full max-w-6xl bg-card rounded-xl shadow-xl overflow-hidden flex flex-col">
+            <div className="flex-1 p-6 overflow-y-auto">
+              {children}
+            </div>
           </main>
         </div>
       </div>

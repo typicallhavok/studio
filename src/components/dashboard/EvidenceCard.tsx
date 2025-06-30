@@ -51,9 +51,10 @@ const getStatusBadge = (
 
 interface EvidenceCardProps {
   item: EvidenceItem;
+  onViewDetails?: (item: EvidenceItem) => void; // Add this prop
 }
 
-export default function EvidenceCard({ item }: EvidenceCardProps) {
+export default function EvidenceCard({ item, onViewDetails }: EvidenceCardProps) {
   const IconComponent = item.icon || FileText;
   const [isDownloading, setIsDownloading] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -281,27 +282,44 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
     }
   };
 
+  const handleViewDetails = () => {
+    if (onViewDetails) {
+      // Use the callback to open modal
+      onViewDetails(item);
+    } else {
+      // Fallback: navigate to chain view if no callback provided
+      router.push(`/chain/${item.cid}`);
+    }
+  };
+
   return (
     <>
-      <Card className="overflow-hidden transition-all hover:shadow-md border bg-background h-auto">
-        <div className={`h-2 w-full bg-primary`}></div>
-        <CardContent className="pt-6 bg-purple-800/5">
+      <Card className="overflow-hidden transition-all hover:shadow-md bg-background h-auto border-none">
+        <div className={`h-2 w-full bg-border`}></div>
+        <CardContent className="pt-6 bg-card">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-md bg-blue-50">
-                <IconComponent className="h-5 w-5 text-blue-600" />
+              <div className="p-2 rounded-md bg-chart-5">
+                <IconComponent className="h-5 w-5 text-card-foreground" />
               </div>
               <div>
                 <h3 className="font-medium line-clamp-1 text-white-900" title={item.name}>{item.name}</h3>
               </div>
             </div>
+            
             <DropdownMenu>
+              {item.password == "true" && (<div className="flex items-start gap-2">
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 font-medium">
+                <Lock className="h-6 w-3" />
+              </Badge>
+            </div>)}
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-white-500 hover:text-white-700 hover:bg-gray-100">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-white-500 hover:text-white-700 hover:bg-primary">
                   <MoreVertical className="h-4 w-4" />
                   <span className="sr-only">Menu</span>
                 </Button>
               </DropdownMenuTrigger>
+              
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -322,19 +340,15 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
           </div>
 
           <div className="grid gap-2 ">
-            {item.password == "true" && (<div className="flex items-start gap-2">
-              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 font-medium">
-                <Lock className="h-3 w-3 mr-1" />
-                Password Protected
-              </Badge>
-            </div>)}
+            
 
             {item.previous && (
               <div className="flex items-start gap-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 font-medium">
                   <History className="h-3 w-3 mr-1" />
                   Version History
                 </Badge>
@@ -351,7 +365,7 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
 
           {/* Add the file details section here */}
           {fileDetails && (
-            <div className="rounded text-xs text-gray-800 dark:text-gray-200 mt-4">
+            <div className="rounded text-xs text-gray-800 mt-4">
               {loadingDetails ? (
                 <div className="flex items-center justify-center py-2">
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -361,7 +375,7 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
                 details.error ? (
                   <span className="text-red-500">{details.error}</span>
                 ) : (
-                  <div className="grid grid-cols-2 gap-y-2">
+                  <div className="grid grid-cols-2 gap-y-2 text-card-foreground">
                     <div><b>Name:</b> {details.name}</div>
                     <div><b>File Size:</b> {formatFileSize(details.fileSize)}</div>
                     <div><b>Description:</b> {details.description}</div>
@@ -449,15 +463,15 @@ export default function EvidenceCard({ item }: EvidenceCardProps) {
           )}
         </CardContent>
 
-        <CardFooter className="border-t border-gray-100 bg-purple-800/5 px-6 py-3">
+        <CardFooter className="border-t border-foreground bg-card px-6 py-3">
           <div className="w-full flex justify-between items-center">
-            <span className="text-xs text-purple-600 font-medium">{item.type}</span>
+            <span className="text-xs text-foreground font-medium">{item.type}</span>
             {item.cid && (
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-3 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
+                  className="h-7 px-3 text-xs text-background bg-foreground hover:outline hover:outline-2 hover:outline-foreground font-medium"
                   onClick={handleFileDetails}
                 >
                   {fileDetails ? "Hide details" : "View details"}

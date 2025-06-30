@@ -23,7 +23,7 @@ const Sidebar:React.FC = () => {
         { title: "Cases", href: "/cases", icon: Search },
         pathname.includes("/chain")&&{ title: "Chain of Custody", href: "/chain", icon: Clock },
         { title: "Logs", href: "/logs", icon: FileCheck },
-        { title: "Settings", href: "/settings", icon: Settings },
+        // { title: "Settings", href: "/settings", icon: Settings },
     ].filter(Boolean);;
 
     const isActive = (path: string) => pathname.includes(path);
@@ -39,10 +39,10 @@ const Sidebar:React.FC = () => {
                                     href={item.href}
                                     className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
                           ${isActive(item.href)
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'hover:bg-muted text-muted-foreground hover:text-foreground'}`}
+                  ? 'bg-primary text-background font-medium'
+                  : 'hover:bg-primary hover:text-background text-muted-foreground hover:text-foreground'}`}
                                 >
-                                    <item.icon className={`h-4 w-4 ${isActive(item.href) ? 'text-primary' : ''}`} />
+                                    <item.icon className={`h-4 w-4 ${isActive(item.href) ? 'text-background' : ''}`} />
                                     {item.title}
                                 </Link>
                             </li>
@@ -50,10 +50,10 @@ const Sidebar:React.FC = () => {
                     </ul>
                 </nav>
                 <div className="mt-auto border-t border-border pt-4">
-                    <Link href="/dashboard/profile" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted hover:text-foreground">
+                    {/* <Link href="/dashboard/profile" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted hover:text-foreground">
                         <UserCircle className="h-5 w-5" />
                         Profile
-                    </Link>
+                    </Link> */}
                     <Button variant="outline" className="w-full mt-2" onClick={() => signOut({ callbackUrl: '/login' })}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout

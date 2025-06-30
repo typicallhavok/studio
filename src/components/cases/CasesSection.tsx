@@ -181,20 +181,6 @@ export default function CasesSection() {
                   <div className="flex flex-col items-center p-4 rounded-lg hover:bg-accent/50 transition-all cursor-pointer">
                     <div className="relative mb-2 group-hover:scale-105 transition-transform">
                       <Folder className="h-16 w-16 text-primary" />
-                      <div className="absolute top-0 right-0">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Open</DropdownMenuItem>
-                            <DropdownMenuItem>Rename</DropdownMenuItem>
-                            <DropdownMenuItem>Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
                     </div>
                     <span className="text-sm text-center font-medium truncate w-full group-hover:text-primary transition-colors">
                       {caseItem.name}

@@ -40,6 +40,21 @@ const findUser = async ({ id = null, username = null }) => {
 
 const insertFile = async (userid, name, caseID, cid, txhash, password, description) => {
     try {
+        // Check if the file already exists
+        const existingFile = await Files.findOne({ user: userid, name: name });
+        
+        // If file exists and has a password, verify it
+        if (existingFile && existingFile.password) {
+            if (!password) {
+                return { error: "Password required for this file" };
+            }
+            
+            const passwordMatches = await argon2.verify(existingFile.password, password);
+            if (!passwordMatches) {
+                return { error: "Incorrect password" };
+            }
+        }
+        
         const hashedPassword = password ? await argon2.hash(password) : null;
 
         const update = {
@@ -58,7 +73,8 @@ const insertFile = async (userid, name, caseID, cid, txhash, password, descripti
             }
         };
 
-        if (hashedPassword) {
+        // Only set password if it's a new file or password is being changed
+        if (hashedPassword && (!existingFile || !existingFile.password)) {
             update.$set.password = hashedPassword;
         }
 
@@ -75,6 +91,7 @@ const insertFile = async (userid, name, caseID, cid, txhash, password, descripti
         return result;
     } catch (error) {
         console.error("Error inserting/updating file:", error);
+        return { error: "Database error occurred" };
     }
 };
 

@@ -1,4 +1,3 @@
-
 import HeroSection from '@/components/sections/HeroSection';
 // import DashboardSection from '@/components/dashboard/DashboardSection'; // No longer shown on home
 import ChainOfEvidenceSection from '@/components/chain-of-evidence/ChainOfEvidenceSection';
@@ -10,18 +9,29 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       <HeroSection />
-      <main className="flex-grow container mx-auto px-4 py-8 sm:py-12">
-        <div className="space-y-12 md:space-y-16">
-          {/* Dashboard is now on its own page, accessible via login */}
-          {/* <div id="dashboard"> // This id is no longer needed here
-            <DashboardSection />
-          </div> */}
-          <Separator className="my-8 md:my-12" />
-          <OtherFeaturesSection />
-          <Separator className="my-8 md:my-12" />
-          <ChainOfEvidenceSection />
-          <Separator className="my-8 md:my-12" />
-          <TamperDetectionSection />
+      <main className="flex-grow">
+        <div className="container mx-auto px-4 py-8 sm:py-12">
+          <div className="space-y-12 md:space-y-16">
+            {/* Dashboard is now on its own page, accessible via login */}
+            {/* <div id="dashboard"> // This id is no longer needed here
+              <DashboardSection />
+            </div> */}
+            <Separator className="my-8 md:my-12" />
+            <OtherFeaturesSection />
+          </div>
+        </div>
+        
+        <div className="w-full bg-primary/60 py-8 sm:py-12">
+          <div className="container mx-auto px-4">
+            <ChainOfEvidenceSection />
+          </div>
+        </div>
+        
+        <div className="container mx-auto px-4 py-8 sm:py-12">
+          <div className="space-y-12 md:space-y-16">
+            <Separator className="my-8 md:my-12" />
+            <TamperDetectionSection />
+          </div>
         </div>
       </main>
       <footer className="py-6 mt-12 border-t border-border">
